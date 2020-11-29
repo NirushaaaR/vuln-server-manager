@@ -9,6 +9,7 @@ const dockerInstanceSchema = new mongoose.Schema({
         type: Number,
         unique: true,
     },
+    isError: Boolean,
     status: String,
 }, { timestamps: true });
 
