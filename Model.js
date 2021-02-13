@@ -7,7 +7,6 @@ const dockerInstanceSchema = new mongoose.Schema({
     },
     port: {
         type: Number,
-        unique: true,
     },
     isError: Boolean,
     status: String,

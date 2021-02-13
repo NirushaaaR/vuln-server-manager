@@ -15,6 +15,7 @@ app.use(CORS({
         if (allowedList.indexOf(origin) !== -1) {
             cb(null, true);
         } else {
+            console.log("not allowed", origin);
             cb(new Error('Not allowed by CORS'));
         }
     }
@@ -40,10 +41,11 @@ app.post("/docker", async (req, res) => {
         } catch (error) {
             // unique on docker and port
             console.table(error);
+            console.log(error);
             if (error.keyValue && error.keyValue.port) {
                 return res.status(400).json({ err: "duplicate port " + error.keyValue.port })
             }
-            await DockerInstance.updateOne({ name: docker }, { status: "deploying" });
+            await DockerInstance.updateOne({ name: docker }, { status: "deploying", port: port, isError: false });
         }
 
         execFile(command, args, async (err, stdout, stderr) => {
@@ -56,7 +58,9 @@ app.post("/docker", async (req, res) => {
                     await DockerInstance.updateOne({ name: docker }, { status: "repository does not exist", isError: true })
                 } else if (stderr.indexOf("port is already allocated") >= 0) {
                     await DockerInstance.updateOne({ name: docker }, { status: "already deployed", isError: true })
-                } 
+                } else if (stderr.indexOf("Downloaded newer image for") >= 0) {
+                    await DockerInstance.updateOne({ name: docker }, { status: "deployed" });
+                }
                 else {
                     await DockerInstance.updateOne({ name: docker }, { status: stderr, isError: true });
                 }
@@ -78,9 +82,9 @@ app.get("/docker/:docker", async (req, res) => {
     const instance = await DockerInstance.findOne({ name: docker });
 
     if (instance !== null) {
-        return res.json({ "data": instance, "url": `http://${os.hostname}:${instance.port}` });
+        return res.json({ "data": instance, "url": `http://${os.networkInterfaces()['eth0'][0].address}:${instance.port}` });
     } else {
-        return res.status(404).json({ "err": `docker image ${docker} not exists on server` });
+        return res.status(404).json({ "status": `remove from server` });
     }
 });
 
@@ -94,32 +98,46 @@ app.delete("/docker/:docker", async (req, res) => {
         const args = ['delete', docker, "bruh"];
 
         execFile(command, args, async (err, stdout, stderr) => {
+            try {
 
-            if (err) {
-                console.log("err", err);
-                await DockerInstance.updateOne({ name: docker }, { status: "fail to delete", isError: true })
-            } else if (stderr) {
-                if (stderr.indexOf("Remove one or more containers") >= 0) {
-                    await DockerInstance.updateOne({ name: docker }, { status: "remove from server", isError: false });
-                } else {
-                    await DockerInstance.updateOne({ name: docker }, { status: stderr, isError: true });
+                if (err) {
+                    console.log("err", err);
+                    await DockerInstance.updateOne({ name: docker }, { status: "fail to delete", isError: true })
+                } else if (stderr) {
+                    if (stderr.indexOf("Remove one or more containers") >= 0) {
+                        await DockerInstance.updateOne({ name: docker }, { status: "remove from server", port: null, isError: false });
+                    } else {
+                        await DockerInstance.updateOne({ name: docker }, { status: stderr, isError: true });
+                    }
+                } else if (stdout) {
+                    await DockerInstance.updateOne({ name: docker }, { status: "remove from server", port: null, isError: false });
+                    setTimeout(() => DockerInstance.deleteOne({name: docker}), 5000)
                 }
-            } else if (stdout) {
-                await DockerInstance.updateOne({ name: docker }, { status: "remove from server", isError: false });
+
+            } catch (error) {
+                await DockerInstance.updateOne({ name: docker }, { status: error.message, isError: true });
             }
 
             console.log("stdout", stdout);
             console.log("stderr", stderr);
-
         });
 
+        await DockerInstance.updateOne({ name: docker }, { status: "deleting", isError: false })
         return res.json({ "status": "deleting the container" });
 
     } else {
         return res.status(404).json({ "err": "docker images not exists" });
     }
 
+});
+
+// handle error
+app.use("*", (req, res) => {
+    res.end();
 })
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("server start"));
+
+// pm2 --name vuln-manager start npm -- dev
+// sudo kill -9 $(sudo lsof -t -i:3000) kill port 300
