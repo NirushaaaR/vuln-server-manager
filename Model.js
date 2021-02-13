@@ -1,15 +1,28 @@
-const mongoose = require('mongoose');
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: `${__dirname}/database.sqlite3`
+});
 
-const dockerInstanceSchema = new mongoose.Schema({
+const Docker = sequelize.define('Docker', {
     name: {
-        type: String,
+        type: DataTypes.STRING,
         unique: true,
     },
     port: {
-        type: Number,
+        type: DataTypes.NUMBER,
+        allowNull: true
     },
-    isError: Boolean,
-    status: String,
-}, { timestamps: true });
+    isOperating: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+    },
+    status: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    }
+});
 
-module.exports = mongoose.model('DockerInstance', dockerInstanceSchema);
+sequelize.sync();
+
+module.exports = { Docker };
