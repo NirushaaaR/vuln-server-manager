@@ -1,7 +1,8 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: `${__dirname}/database.sqlite3`
+    storage: `${__dirname}/database.sqlite3`,
+    logging: false,
 });
 
 const Docker = sequelize.define('Docker', {
