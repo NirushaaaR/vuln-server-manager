@@ -9,7 +9,7 @@ else
     PORT=$3
     IMAGE=$2
     if [ $1 == "deploy" ]; then
-        docker run -p ${PORT}:${PORT} -d --restart unless-stopped ${IMAGE}
+        docker run -p ${PORT}:${PORT} -d --restart unless-stopped --rm ${IMAGE}
         echo "Finish deploy!!"
     elif [ $1 == "delete" ]; then
         docker rm -f $(docker ps -q --filter ancestor=${IMAGE})

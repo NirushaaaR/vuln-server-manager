@@ -7,16 +7,16 @@ const { execFile } = require("child_process");
 app.use(express.json());
 
 // app.use(CORS());
-// const allowedList = ["http://localhost:8000", "http://127.0.0.1:8000"];
-// app.use(CORS({
-//     origin: function (origin, cb) {
-//         if (allowedList.indexOf(origin) !== -1) {
-//             cb(null, true);
-//         } else {
-//             cb(new Error('Error'));
-//         }
-//     }
-// }));
+const allowedList = ["http://localhost:8000", "http://127.0.0.1:8000"];
+app.use(CORS({
+    origin: function (origin, cb) {
+        if (allowedList.indexOf(origin) !== -1) {
+            cb(null, true);
+        } else {
+            cb(new Error('Error'));
+        }
+    }
+}));
 
 const { Docker } = require('./Model');
 
@@ -83,7 +83,8 @@ app.get("/docker/:docker", async (req, res) => {
     const docker = req.params.docker;
     const instance = await Docker.findOne({ where: {name: docker} });
     if (instance !== null) {
-        return res.json({ "data": instance, "url": `http://${os.networkInterfaces()['eth0'][0].address}:${instance.port}` });
+        const eth0 = os.networkInterfaces()['eth0']
+        return res.json({ "data": instance, "url": `http://${eth0 ? eth0[0].address : "workspace"}:${instance.port}` });
     } else {
         return res.status(404).json({ "status": "ไม่มีใน Server" });
     }
