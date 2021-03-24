@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# dont forget to chmod 774
-
 if [ $# -lt 3 ]; then
     1>&2 echo "usage deploy-docker.sh <deploy/delete> <docker> <port>"
     exit 1

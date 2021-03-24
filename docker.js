@@ -4,6 +4,10 @@ const { Docker } = require('./Model');
 const os = require('os');
 const { execFile } = require("child_process");
 
+// change this to your server domain
+const mainDomain = "localhost";
+
+// deploy new image
 router.post("/docker", async (req, res) => {
     const { port, docker } = req.body;
 
@@ -17,9 +21,11 @@ router.post("/docker", async (req, res) => {
         if (instance !== null) {
             // check port
             if (instance.port !== null) {
+                // already deploy this docker image
                 return res.status(400).json({status: `Deploy '${docker}' ใน port ${instance.port} ไปแล้ว กรุณาลบแล้วทำใหม่`});
             }
 
+            instance.status = "deploying";
             instance.isOperating = true;
             await instance.save();
 
@@ -61,18 +67,18 @@ router.post("/docker", async (req, res) => {
     return res.status(400).json({ "status": "input ผิด ({docker, port})" });
 });
 
-
+// get deploying status
 router.get("/docker/:docker", async (req, res) => {
     const docker = req.params.docker;
     const instance = await Docker.findOne({ where: {name: docker} });
     if (instance !== null) {
-        const eth0 = os.networkInterfaces()['eth0']
-        return res.json({ "data": instance, "url": `http://${eth0 ? eth0[0].address : "workspace"}:${instance.port}` });
+        return res.json({ "data": instance, "url": `http://${mainDomain}:${instance.port}` });
     } else {
         return res.status(404).json({ "status": "ไม่มีใน Server" });
     }
 });
 
+// undeploy and delete the image
 router.delete("/docker/:docker", async (req, res) => {
     const docker = req.params.docker;
 
