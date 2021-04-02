@@ -18,7 +18,7 @@ router.post("/docker", async (req, res) => {
 
         let instance = await Docker.findOne({ where: { name: docker } });
 
-        if (instance !== null) {
+        if (instance) {
             // check port
             if (instance.port !== null) {
                 // already deploy this docker image
@@ -84,7 +84,7 @@ router.delete("/docker/:docker", async (req, res) => {
 
     const instance = await Docker.findOne({ where: {name: docker} });
 
-    if (instance !== null) {
+    if (instance) {
         const command = `${__dirname}/manage-docker.sh`;
         const args = ['delete', docker, "bruh"];
 
