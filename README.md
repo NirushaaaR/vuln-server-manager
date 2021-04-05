@@ -1,21 +1,22 @@
 # vuln-server-manager
-For Managing website that can be deploy with docker image
+
+สำหรับจัดการเว็บไซต์ต่าง ๆ ที่ถูก deploy จาก docker image
 
 ## requirements
-1) nodejs + npm
-2) docker
+1) [nodejs + npm](https://nodejs.org/en/download/current/)
+2) [docker](https://docs.docker.com/get-docker/)
 
 ## running server
-- install all dependencies with
+- ทำการ install dependencies ต่างๆ 
 ``` bash
 npm install
 ```
-- running a server in development mode
+- รัน server ใน development mode
 ```
 npm run dev
 ```
 
-- for production simply run
+- สำหรับ production รัน
 ``` bash
 node index.js
 ```
